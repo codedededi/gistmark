@@ -1,44 +1,44 @@
-# Floating Trigger Button Implementation Plan
+# 悬浮触发按钮实现计划
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **给 agentic worker：** 必需子技能：使用 superpowers:subagent-driven-development（推荐）或 superpowers:executing-plans 按任务逐条实现。步骤使用 checkbox（`- [ ]`）语法跟踪进度。
 
-**Goal:** Inject a half-hidden circular `</>` floating button on all web pages that sends a `GISTMARK_TRIGGER_CLICKED` message to the background script on click.
+**目标：** 在所有网页注入一个半隐藏的圆形 `</>` 悬浮按钮，点击后向 background script 发送 `GISTMARK_TRIGGER_CLICKED` 消息。
 
-**Architecture:** A content script injects an isolated Shadow DOM root containing the button. Pure logic (message construction, message handling) is extracted into `lib/` modules and unit-tested with Vitest. WXT entrypoint files stay thin — they wire the pure logic to `browser.runtime` APIs. No React, no external fonts, no host-page style leakage.
+**架构：** content script 注入一个隔离的 Shadow DOM 根节点，内含按钮。纯逻辑（消息构造、消息处理）抽离到 `lib/` 模块并用 Vitest 单测。WXT 入口文件保持纤薄——仅把纯逻辑接到 `browser.runtime` API。不使用 React，不加载外部字体，不影响宿主页面样式。
 
-**Tech Stack:** WXT, TypeScript, Vitest, webextension-polyfill (`browser.*` provided by WXT)
-
----
-
-## File Structure
-
-- `lib/messages.ts` — `TriggerMessage` type + `buildTriggerMessage` (pure)
-- `lib/messages.test.ts` — tests for message builder
-- `lib/handleMessage.ts` — `handleTriggerMessage` (pure, injectable logger)
-- `lib/handleMessage.test.ts` — tests for handler
-- `lib/triggerUi.ts` — `createTriggerUi(onClick)` builds Shadow DOM host element (no unit test; verified manually)
-- `entrypoints/content.ts` — wires UI + message builder to content script lifecycle
-- `entrypoints/background.ts` — wires `onMessage` listener to `handleTriggerMessage`
-- `vitest.config.ts` — test config
-- `package.json` — add `test` scripts + vitest devDependency
+**技术栈：** WXT、TypeScript、Vitest、webextension-polyfill（`browser.*` 由 WXT 提供）
 
 ---
 
-## Task 1: Vitest Setup
+## 文件结构
 
-**Files:**
-- Create: `vitest.config.ts`
-- Create: `lib/sanity.test.ts`
-- Modify: `package.json`
+- `lib/messages.ts` — `TriggerMessage` 类型 + `buildTriggerMessage`（纯函数）
+- `lib/messages.test.ts` — 消息构建器测试
+- `lib/handleMessage.ts` — `handleTriggerMessage`（纯函数，logger 可注入）
+- `lib/handleMessage.test.ts` — 处理器测试
+- `lib/triggerUi.ts` — `createTriggerUi(onClick)` 构建 Shadow DOM 宿主元素（无单测；Task 7 手动验证）
+- `entrypoints/content.ts` — 把 UI + 消息构建器接到 content script 生命周期
+- `entrypoints/background.ts` — 把 `onMessage` 监听器接到 `handleTriggerMessage`
+- `vitest.config.ts` — 测试配置
+- `package.json` — 新增 `test` 脚本 + vitest devDependency
 
-- [ ] **Step 1: Install vitest**
+---
 
-Run: `npm i -D vitest`
-Expected: vitest added to devDependencies, package-lock.json updated.
+## Task 1: Vitest 配置
 
-- [ ] **Step 2: Create vitest config**
+**文件：**
+- 新建：`vitest.config.ts`
+- 新建：`lib/sanity.test.ts`
+- 修改：`package.json`
 
-Create `vitest.config.ts`:
+- [ ] **Step 1: 安装 vitest**
+
+运行：`npm i -D vitest`
+预期：vitest 加入 devDependencies，package-lock.json 更新。
+
+- [ ] **Step 2: 创建 vitest 配置**
+
+新建 `vitest.config.ts`：
 
 ```ts
 import { defineConfig } from 'vitest/config';
@@ -51,16 +51,16 @@ export default defineConfig({
 });
 ```
 
-- [ ] **Step 3: Add test scripts to package.json**
+- [ ] **Step 3: 在 package.json 添加测试脚本**
 
-Modify `package.json` `scripts` to add two entries (keep existing scripts unchanged):
+修改 `package.json` 的 `scripts`，新增两条（保留既有脚本不变）：
 
 ```json
 "test": "vitest run",
 "test:watch": "vitest"
 ```
 
-The full `scripts` block should read:
+完整的 `scripts` 块应如下：
 
 ```json
 "scripts": {
@@ -77,9 +77,9 @@ The full `scripts` block should read:
 },
 ```
 
-- [ ] **Step 4: Write a sanity test**
+- [ ] **Step 4: 写一个 sanity 测试**
 
-Create `lib/sanity.test.ts`:
+新建 `lib/sanity.test.ts`：
 
 ```ts
 import { describe, it, expect } from 'vitest';
@@ -91,12 +91,12 @@ describe('vitest sanity', () => {
 });
 ```
 
-- [ ] **Step 5: Run the sanity test**
+- [ ] **Step 5: 运行 sanity 测试**
 
-Run: `npm test`
-Expected: 1 test passed in `lib/sanity.test.ts`.
+运行：`npm test`
+预期：`lib/sanity.test.ts` 中 1 个测试通过。
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 6: 提交**
 
 ```bash
 git add package.json package-lock.json vitest.config.ts lib/sanity.test.ts
@@ -105,15 +105,15 @@ git commit -m "test: add vitest setup"
 
 ---
 
-## Task 2: Message Contract (TDD)
+## Task 2: 消息契约（TDD）
 
-**Files:**
-- Create: `lib/messages.ts`
-- Create: `lib/messages.test.ts`
+**文件：**
+- 新建：`lib/messages.ts`
+- 新建：`lib/messages.test.ts`
 
-- [ ] **Step 1: Write the failing test**
+- [ ] **Step 1: 写失败测试**
 
-Create `lib/messages.test.ts`:
+新建 `lib/messages.test.ts`：
 
 ```ts
 import { describe, it, expect } from 'vitest';
@@ -140,14 +140,14 @@ describe('buildTriggerMessage', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [ ] **Step 2: 运行测试确认失败**
 
-Run: `npm test`
-Expected: FAIL — `Cannot find module './messages'` or similar resolution error.
+运行：`npm test`
+预期：FAIL — `Cannot find module './messages'` 或类似解析错误。
 
-- [ ] **Step 3: Write minimal implementation**
+- [ ] **Step 3: 写最小实现**
 
-Create `lib/messages.ts`:
+新建 `lib/messages.ts`：
 
 ```ts
 export interface TriggerMessage {
@@ -161,12 +161,12 @@ export function buildTriggerMessage(url: string, title: string): TriggerMessage 
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [ ] **Step 4: 运行测试确认通过**
 
-Run: `npm test`
-Expected: 3 tests passed (sanity + 2 message tests).
+运行：`npm test`
+预期：3 个测试通过（sanity + 2 个消息测试）。
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 5: 提交**
 
 ```bash
 git add lib/messages.ts lib/messages.test.ts
@@ -175,15 +175,15 @@ git commit -m "feat: add trigger message contract"
 
 ---
 
-## Task 3: Background Message Handler (TDD)
+## Task 3: 后台消息处理器（TDD）
 
-**Files:**
-- Create: `lib/handleMessage.ts`
-- Create: `lib/handleMessage.test.ts`
+**文件：**
+- 新建：`lib/handleMessage.ts`
+- 新建：`lib/handleMessage.test.ts`
 
-- [ ] **Step 1: Write the failing test**
+- [ ] **Step 1: 写失败测试**
 
-Create `lib/handleMessage.test.ts`:
+新建 `lib/handleMessage.test.ts`：
 
 ```ts
 import { describe, it, expect, vi } from 'vitest';
@@ -229,14 +229,14 @@ describe('handleTriggerMessage', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [ ] **Step 2: 运行测试确认失败**
 
-Run: `npm test`
-Expected: FAIL — `Cannot find module './handleMessage'`.
+运行：`npm test`
+预期：FAIL — `Cannot find module './handleMessage'`。
 
-- [ ] **Step 3: Write minimal implementation**
+- [ ] **Step 3: 写最小实现**
 
-Create `lib/handleMessage.ts`:
+新建 `lib/handleMessage.ts`：
 
 ```ts
 import type { TriggerMessage } from './messages';
@@ -261,12 +261,12 @@ export function handleTriggerMessage(
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [ ] **Step 4: 运行测试确认通过**
 
-Run: `npm test`
-Expected: all tests passed (sanity + 2 message + 4 handler tests).
+运行：`npm test`
+预期：全部测试通过（sanity + 2 个消息测试 + 4 个处理器测试）。
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 5: 提交**
 
 ```bash
 git add lib/handleMessage.ts lib/handleMessage.test.ts
@@ -275,14 +275,14 @@ git commit -m "feat: add background trigger message handler"
 
 ---
 
-## Task 4: Wire Background Script
+## Task 4: 接线后台脚本
 
-**Files:**
-- Modify: `entrypoints/background.ts`
+**文件：**
+- 修改：`entrypoints/background.ts`
 
-- [ ] **Step 1: Replace background.ts contents**
+- [ ] **Step 1: 替换 background.ts 内容**
 
-Overwrite `entrypoints/background.ts` with:
+用以下内容覆盖 `entrypoints/background.ts`：
 
 ```ts
 import { handleTriggerMessage } from '@/lib/handleMessage';
@@ -296,12 +296,12 @@ export default defineBackground(() => {
 });
 ```
 
-- [ ] **Step 2: Run type check**
+- [ ] **Step 2: 运行类型检查**
 
-Run: `npm run compile`
-Expected: no errors. (WXT provides `defineBackground` and `browser` globals via `.wxt/wxt.d.ts`.)
+运行：`npm run compile`
+预期：无错误。（WXT 通过 `.wxt/wxt.d.ts` 提供 `defineBackground` 和 `browser` 全局。）
 
-- [ ] **Step 3: Commit**
+- [ ] **Step 3: 提交**
 
 ```bash
 git add entrypoints/background.ts
@@ -310,16 +310,16 @@ git commit -m "feat: wire background onMessage listener"
 
 ---
 
-## Task 5: Trigger UI (Shadow DOM)
+## Task 5: 触发器 UI（Shadow DOM）
 
-**Files:**
-- Create: `lib/triggerUi.ts`
+**文件：**
+- 新建：`lib/triggerUi.ts`
 
-This module builds the Shadow DOM host element. No unit test — the rendering is verified manually in Task 7. The function takes an `onClick` callback (dependency-injected) so the click side-effect is isolated from DOM construction.
+本模块构建 Shadow DOM 宿主元素。无单测——渲染在 Task 7 手动验证。函数接收 `onClick` 回调（依赖注入），把点击副作用与 DOM 构造解耦。
 
-- [ ] **Step 1: Create the UI builder**
+- [ ] **Step 1: 创建 UI 构建器**
 
-Create `lib/triggerUi.ts`:
+新建 `lib/triggerUi.ts`：
 
 ```ts
 const STYLES = `
@@ -438,12 +438,12 @@ export function createTriggerUi(onClick: () => void): HTMLElement {
 }
 ```
 
-- [ ] **Step 2: Run type check**
+- [ ] **Step 2: 运行类型检查**
 
-Run: `npm run compile`
-Expected: no errors.
+运行：`npm run compile`
+预期：无错误。
 
-- [ ] **Step 3: Commit**
+- [ ] **Step 3: 提交**
 
 ```bash
 git add lib/triggerUi.ts
@@ -452,14 +452,14 @@ git commit -m "feat: add shadow DOM trigger UI builder"
 
 ---
 
-## Task 6: Wire Content Script
+## Task 6: 接线 content script
 
-**Files:**
-- Modify: `entrypoints/content.ts`
+**文件：**
+- 修改：`entrypoints/content.ts`
 
-- [ ] **Step 1: Replace content.ts contents**
+- [ ] **Step 1: 替换 content.ts 内容**
 
-Overwrite `entrypoints/content.ts` with:
+用以下内容覆盖 `entrypoints/content.ts`：
 
 ```ts
 import { buildTriggerMessage } from '@/lib/messages';
@@ -467,8 +467,8 @@ import { createTriggerUi } from '@/lib/triggerUi';
 
 export default defineContentScript({
   matches: ['<all_urls>'],
-  all_frames: false,
-  run_at: 'document_idle',
+  allFrames: false,
+  runAt: 'document_idle',
   main() {
     const ui = createTriggerUi(async () => {
       const message = buildTriggerMessage(location.href, document.title);
@@ -483,12 +483,12 @@ export default defineContentScript({
 });
 ```
 
-- [ ] **Step 2: Run type check**
+- [ ] **Step 2: 运行类型检查**
 
-Run: `npm run compile`
-Expected: no errors.
+运行：`npm run compile`
+预期：无错误。
 
-- [ ] **Step 3: Commit**
+- [ ] **Step 3: 提交**
 
 ```bash
 git add entrypoints/content.ts
@@ -497,53 +497,53 @@ git commit -m "feat: wire content script to inject trigger UI"
 
 ---
 
-## Task 7: End-to-End Manual Verification
+## Task 7: 端到端手动验证
 
-**Files:** none (verification only)
+**文件：** 无（仅验证）
 
-- [ ] **Step 1: Run full test suite + type check**
+- [ ] **Step 1: 运行完整测试套件 + 类型检查**
 
-Run: `npm test && npm run compile`
-Expected: all tests pass; tsc exits 0.
+运行：`npm test && npm run compile`
+预期：全部测试通过；tsc 退出码 0。
 
-- [ ] **Step 2: Start the dev build**
+- [ ] **Step 2: 启动 dev 构建**
 
-Run: `npm run dev`
-Expected: WXT launches a Chrome window with the extension loaded. Watch the terminal for background logs.
+运行：`npm run dev`
+预期：WXT 启动一个加载了扩展的 Chrome 窗口。在终端观察 background 日志。
 
-- [ ] **Step 3: Verify the trigger renders**
+- [ ] **Step 3: 验证触发器渲染**
 
-In the WXT-launched Chrome, navigate to `https://example.com`.
-Expected: a small dark circle is visible at the right edge of the viewport, vertically centered, partially off-screen.
+在 WXT 启动的 Chrome 中，访问 `https://example.com`。
+预期：视口右边缘垂直居中位置可见一个深色小圆，部分在屏外。
 
-- [ ] **Step 4: Verify hover behavior**
+- [ ] **Step 4: 验证悬停行为**
 
-Hover over the right edge near the trigger.
-Expected: the button slides fully into view, opacity increases to fully visible, border turns blue, and the `[CMD+SHIFT+G] EXTRACT` tooltip fades in to the left.
+把鼠标移到右侧边缘触发器附近。
+预期：按钮完全滑入，不透明度升到满，边框变蓝，`[CMD+SHIFT+G] EXTRACT` 工具提示在左侧淡入。
 
-- [ ] **Step 5: Verify click → background log**
+- [ ] **Step 5: 验证点击 → background 日志**
 
-Click the trigger.
-Expected: the WXT dev terminal prints `[GistMark] { type: 'GISTMARK_TRIGGER_CLICKED', url: 'https://example.com/', title: 'Example Domain' }`.
+点击触发器。
+预期：WXT dev 终端打印 `[GistMark] { type: 'GISTMARK_TRIGGER_CLICKED', url: 'https://example.com/', title: 'Example Domain' }`。
 
-- [ ] **Step 6: Verify style isolation**
+- [ ] **Step 6: 验证样式隔离**
 
-Open DevTools on the page, inspect the page's root elements.
-Expected: a single `div#gistmark-trigger-host` is appended to `<html>`. Its shadow root contains all trigger styles. The host page's own styles are unaffected (no leaked CSS rules, no shifted layout).
+在页面上打开 DevTools，检查页面根元素。
+预期：`<html>` 上追加了一个 `div#gistmark-trigger-host`。其 shadow root 包含全部触发器样式。宿主页面自身样式未受影响（无 CSS 规则泄漏，无布局位移）。
 
-- [ ] **Step 7: Stop dev server**
+- [ ] **Step 7: 停止 dev 服务器**
 
-Stop the `npm run dev` process (Ctrl+C in its terminal).
+停止 `npm run dev` 进程（在其终端按 Ctrl+C）。
 
-- [ ] **Step 8: Final commit (if any verification artifacts)**
+- [ ] **Step 8: 最终提交（如有验证产物）**
 
-No code changes in this task — skip commit unless the verification surfaced a fix.
+本任务无代码改动——除非验证中发现需要修复的问题，否则跳过提交。
 
 ---
 
-## Self-Review Notes
+## 自检备注
 
-- **Spec coverage**: Trigger renders on all pages (Task 6 `matches: ['<all_urls>']`); Shadow DOM isolation (Task 5 `attachShadow`); click sends `GISTMARK_TRIGGER_CLICKED` (Task 6); background logs (Task 4); visual spec translated faithfully (Task 5 STYLES — black bg, 40×40, opacity 0.4→1, border #E0E0E0→#0033FF, tooltip with `[CMD+SHIFT+G]` + `EXTRACT`, system mono font, 300ms slide, 200ms opacity/tooltip).
-- **Out of scope honored**: no keyboard shortcut wiring; no extraction logic; no popup/panel; no dark mode; no positioning/drag.
-- **Type consistency**: `TriggerMessage` defined in Task 2, imported in Task 3 (`handleMessage.ts`) and Task 6 (`content.ts` via `buildTriggerMessage`). `handleTriggerMessage(message, log)` signature consistent across Task 3 test, Task 3 impl, and Task 4 wiring. `createTriggerUi(onClick)` consistent across Task 5 and Task 6.
-- **No placeholders**: every code step contains complete code.
+- **规格覆盖**：触发器在所有页面渲染（Task 6 `matches: ['<all_urls>']`）；Shadow DOM 隔离（Task 5 `attachShadow`）；点击发送 `GISTMARK_TRIGGER_CLICKED`（Task 6）；background 记录日志（Task 4）；视觉规格忠实翻译（Task 5 STYLES——黑底、40×40、opacity 0.4→1、border #E0E0E0→#0033FF、工具提示含 `[CMD+SHIFT+G]` + `EXTRACT`、系统等宽字体、300ms 滑动、200ms 不透明度/工具提示）。
+- **范围外已遵守**：不绑定键盘快捷键；不实现提取逻辑；不做 popup/面板；不做暗色模式；不做定位/拖拽。
+- **类型一致性**：`TriggerMessage` 在 Task 2 定义，在 Task 3（`handleMessage.ts`）和 Task 6（`content.ts` 经 `buildTriggerMessage`）中导入。`handleTriggerMessage(message, log)` 签名在 Task 3 测试、Task 3 实现、Task 4 接线中一致。`createTriggerUi(onClick)` 在 Task 5 和 Task 6 中一致。
+- **无占位符**：每个代码步骤都含完整代码。
