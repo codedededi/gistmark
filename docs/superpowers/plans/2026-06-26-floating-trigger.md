@@ -16,7 +16,7 @@
 - `lib/messages.test.ts` — 消息构建器测试
 - `lib/handleMessage.ts` — `handleTriggerMessage`（纯函数，logger 可注入）
 - `lib/handleMessage.test.ts` — 处理器测试
-- `lib/triggerUi.ts` — `createTriggerUi(onClick)` 构建 Shadow DOM 宿主元素（无单测；Task 7 手动验证）
+- `lib/triggerUi.ts` — `createTriggerButton(onClick)` 构建 Shadow DOM 宿主元素（无单测；Task 7 手动验证）
 - `entrypoints/content.ts` — 把 UI + 消息构建器接到 content script 生命周期
 - `entrypoints/background.ts` — 把 `onMessage` 监听器接到 `handleTriggerMessage`
 - `vitest.config.ts` — 测试配置
@@ -399,7 +399,7 @@ const STYLES = `
 }
 `;
 
-export function createTriggerUi(onClick: () => void): HTMLElement {
+export function createTriggerButton(onClick: () => void): HTMLElement {
   const host = document.createElement('div');
   host.id = 'gistmark-trigger-host';
   const shadow = host.attachShadow({ mode: 'open' });
@@ -463,14 +463,14 @@ git commit -m "feat: add shadow DOM trigger UI builder"
 
 ```ts
 import { buildTriggerMessage } from '@/lib/messages';
-import { createTriggerUi } from '@/lib/triggerUi';
+import { createTriggerButton } from '@/lib/triggerUi';
 
 export default defineContentScript({
   matches: ['<all_urls>'],
   allFrames: false,
   runAt: 'document_idle',
   main() {
-    const ui = createTriggerUi(async () => {
+    const triggerButton = createTriggerButton(async () => {
       const message = buildTriggerMessage(location.href, document.title);
       try {
         await browser.runtime.sendMessage(message);
@@ -478,7 +478,7 @@ export default defineContentScript({
         console.warn('[GistMark] Failed to send trigger message:', error);
       }
     });
-    document.documentElement.append(ui);
+    document.documentElement.append(triggerButton);
   },
 });
 ```
@@ -545,5 +545,5 @@ git commit -m "feat: wire content script to inject trigger UI"
 
 - **规格覆盖**：触发器在所有页面渲染（Task 6 `matches: ['<all_urls>']`）；Shadow DOM 隔离（Task 5 `attachShadow`）；点击发送 `GISTMARK_TRIGGER_CLICKED`（Task 6）；background 记录日志（Task 4）；视觉规格忠实翻译（Task 5 STYLES——黑底、40×40、opacity 0.4→1、border #E0E0E0→#0033FF、工具提示含 `[CMD+SHIFT+G]` + `EXTRACT`、系统等宽字体、300ms 滑动、200ms 不透明度/工具提示）。
 - **范围外已遵守**：不绑定键盘快捷键；不实现提取逻辑；不做 popup/面板；不做暗色模式；不做定位/拖拽。
-- **类型一致性**：`TriggerMessage` 在 Task 2 定义，在 Task 3（`handleMessage.ts`）和 Task 6（`content.ts` 经 `buildTriggerMessage`）中导入。`handleTriggerMessage(message, log)` 签名在 Task 3 测试、Task 3 实现、Task 4 接线中一致。`createTriggerUi(onClick)` 在 Task 5 和 Task 6 中一致。
+- **类型一致性**：`TriggerMessage` 在 Task 2 定义，在 Task 3（`handleMessage.ts`）和 Task 6（`content.ts` 经 `buildTriggerMessage`）中导入。`handleTriggerMessage(message, log)` 签名在 Task 3 测试、Task 3 实现、Task 4 接线中一致。`createTriggerButton(onClick)` 在 Task 5 和 Task 6 中一致。
 - **无占位符**：每个代码步骤都含完整代码。

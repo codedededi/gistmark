@@ -75,7 +75,7 @@ const STYLES = `
 }
 `;
 
-export function createTriggerUi(onClick: () => void): HTMLElement {
+export function createTriggerButton(onClick: () => void): HTMLElement {
   const host = document.createElement('div');
   host.id = 'gistmark-trigger-host';
   const shadow = host.attachShadow({ mode: 'open' });
