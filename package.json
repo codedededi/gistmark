@@ -12,9 +12,7 @@
     "zip": "wxt zip",
     "zip:firefox": "wxt zip -b firefox",
     "compile": "tsc --noEmit",
-    "postinstall": "wxt prepare",
-    "test": "vitest run",
-    "test:watch": "vitest"
+    "postinstall": "wxt prepare"
   },
   "dependencies": {
     "react": "^19.2.4",
@@ -25,7 +23,6 @@
     "@types/react-dom": "^19.2.3",
     "@wxt-dev/module-react": "^1.1.5",
     "typescript": "^5.9.3",
-    "vitest": "^4.1.9",
     "wxt": "^0.20.27"
   }
 }
