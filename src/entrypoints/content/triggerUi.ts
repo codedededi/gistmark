@@ -13,11 +13,15 @@ const STYLES = `
   right: 0;
   top: 50%;
   transform: translate(50%, -50%);
-  transition: transform 300ms ease-in-out;
+  transition: transform 300ms ease-in-out, opacity 160ms ease;
   display: flex;
   align-items: center;
   padding-right: 16px;
   pointer-events: auto;
+}
+:host(.gm-hidden) .gm-trigger {
+  opacity: 0;
+  pointer-events: none;
 }
 .gm-trigger:hover {
   transform: translate(0, -50%);

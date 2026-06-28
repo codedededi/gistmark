@@ -1,12 +1,20 @@
 import { buildTriggerMessage } from '@/shared/messages';
 import { createTriggerButton } from './triggerUi';
+import { createSidebar } from './sidebarUi';
 
 export default defineContentScript({
   matches: ['<all_urls>'],
   allFrames: false,
   runAt: 'document_idle',
   main() {
-    const triggerButton = createTriggerButton(async () => {
+    const sidebar = createSidebar(() => {
+      // Reveal the trigger after the sidebar has mostly slid away.
+      window.setTimeout(() => triggerHost.classList.remove('gm-hidden'), 220);
+    });
+
+    const triggerHost = createTriggerButton(async () => {
+      sidebar.open();
+      triggerHost.classList.add('gm-hidden');
       const message = buildTriggerMessage(location.href, document.title);
       try {
         await browser.runtime.sendMessage(message);
@@ -14,6 +22,7 @@ export default defineContentScript({
         console.warn('[GistMark] Failed to send trigger message:', error);
       }
     });
-    document.documentElement.append(triggerButton);
+
+    document.documentElement.append(triggerHost, sidebar.host);
   },
 });
