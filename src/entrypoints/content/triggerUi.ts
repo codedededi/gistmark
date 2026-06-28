@@ -1,3 +1,5 @@
+const LOGO_URL = browser.runtime.getURL('/icon/96.png');
+
 const STYLES = `
 :host { all: initial; }
 .gm-container {
@@ -20,35 +22,57 @@ const STYLES = `
 .gm-trigger:hover {
   transform: translate(0, -50%);
 }
+.gm-connector {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 40px;
+  background: rgb(240, 239, 237);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 200ms ease;
+}
 .gm-button {
+  position: relative;
+  z-index: 1;
   width: 40px;
   height: 40px;
   border-radius: 9999px;
-  background: #000000;
-  color: #ffffff;
-  border: 1px solid #E0E0E0;
-  opacity: 0.4;
+  background: #FFFFFF;
+  border: none;
+  opacity: 0.5;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: opacity 200ms ease, border-color 200ms ease, box-shadow 200ms ease;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 14px;
-  font-weight: 500;
-  letter-spacing: -1px;
+  transition: opacity 200ms ease, box-shadow 200ms ease;
   outline: none;
+  padding: 0;
+}
+.gm-button img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.gm-trigger:hover .gm-connector {
+  opacity: 1;
 }
 .gm-button:hover,
 .gm-trigger:hover .gm-button {
   opacity: 1;
-  border-color: #0033FF;
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.25);
 }
 .gm-button:focus-visible {
-  box-shadow: 0 0 0 1px #0033FF;
+  box-shadow: 0 0 0 2px #8B5CF6;
 }
 .gm-tooltip {
   position: absolute;
+  z-index: 2;
   right: calc(100% + 12px);
   background: #FFFFFF;
   border: 1px solid #E0E0E0;
@@ -99,12 +123,18 @@ export function createTriggerButton(onClick: () => void): HTMLElement {
   text.textContent = 'EXTRACT';
   tooltip.append(kbd, text);
 
+  const connector = document.createElement('div');
+  connector.className = 'gm-connector';
+
   const button = document.createElement('button');
   button.className = 'gm-button';
   button.setAttribute('aria-label', 'Extract Gist');
-  button.textContent = '</>';
+  const icon = document.createElement('img');
+  icon.src = LOGO_URL;
+  icon.alt = '';
+  button.append(icon);
 
-  trigger.append(tooltip, button);
+  trigger.append(connector, button, tooltip);
   container.append(trigger);
   shadow.append(style, container);
 

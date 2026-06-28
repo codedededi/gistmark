@@ -5,4 +5,12 @@ export default defineConfig({
   srcDir: 'src',
   publicDir: 'public',
   modules: ['@wxt-dev/module-react'],
+  manifest: {
+    web_accessible_resources: [
+      {
+        resources: ['icon/*.png'],
+        matches: ['<all_urls>'],
+      },
+    ],
+  },
 });
