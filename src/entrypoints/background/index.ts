@@ -1,4 +1,4 @@
-import { handleTriggerMessage } from '@/lib/handleMessage';
+import { handleTriggerMessage } from './handleMessage';
 
 export default defineBackground(() => {
   console.log('[GistMark] background ready', { id: browser.runtime.id });

@@ -1,5 +1,5 @@
-import { buildTriggerMessage } from '@/lib/messages';
-import { createTriggerButton } from '@/lib/triggerUi';
+import { buildTriggerMessage } from '@/shared/messages';
+import { createTriggerButton } from './triggerUi';
 
 export default defineContentScript({
   matches: ['<all_urls>'],

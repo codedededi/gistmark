@@ -1,4 +1,4 @@
-import type { TriggerMessage } from './messages';
+import type { TriggerMessage } from '@/shared/messages';
 
 function isTriggerMessage(value: unknown): value is TriggerMessage {
   if (typeof value !== 'object' || value === null) return false;
